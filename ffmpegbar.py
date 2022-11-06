@@ -12,17 +12,18 @@ def humanReadableTime(seconds):
     second = int(seconds % 60)
     return f'{hour:02d}:{minute:02d}:{second:02d}'
 
+
 def humanReadableSize(size, decimal_places=2):
-    for unit in ['','K','M','G','T','P','E','Z']:
+    for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
         if size < 1024.0:
             break
         size /= 1024.0
     return f"{size:.{decimal_places}f} {unit}B"
 
+
 def progressBar(value, endvalue, start_time, bar_length=20):
     percent = float(value) / endvalue if endvalue else 0
-    bar = '[' + '=' * int(round(percent * bar_length) - 1) + '>' + ' ' * (
-        bar_length - int(round(percent * bar_length))) + ']'
+    bar = '[' + '=' * int(round(percent * bar_length) - 1) + '>' + ' ' * (bar_length - int(round(percent * bar_length))) + ']'
     time_taken = time.time() - start_time
     eta = (time_taken / value) * (endvalue - value) if value else 0
     finish_at = time.localtime(time.time() + eta)
@@ -76,9 +77,12 @@ def parseFfmpegStatus(stdout):
 def main():
 
     ffmpeg_params = sys.argv[1:]
-    total_frames = int(
-        getMediaProperties(ffmpeg_params[ffmpeg_params.index('-i') +
-                                         1])['nb_frames'])
+
+    if os.path.exists(ffmpeg_params[-1]):
+        print(f'Output file "{ffmpeg_params[-1]}" already exists.')
+        return
+
+    total_frames = int(getMediaProperties(ffmpeg_params[ffmpeg_params.index('-i') + 1])['nb_frames'])
     start_time = time.time()
     proc = sp.Popen(['ffmpeg'] + ffmpeg_params,
                     stdout=sp.PIPE,
@@ -87,14 +91,12 @@ def main():
     while proc.poll() is None:
         data = parseFfmpegStatus(proc.stderr)
         if data is not None:
-            print(
-                f"{data['frame']} / {total_frames} {data['fps']}fps {progressBar(int(data['frame']), total_frames, start_time)}",
-                end='\r')
-        time.sleep(0.5)
-    print(
-        f"{total_frames} / {total_frames} {data['fps']}fps {progressBar(total_frames, total_frames, start_time)}"
-    )
+            print(f"{data['frame']} / {total_frames} {data['fps']}fps {progressBar(int(data['frame']), total_frames, start_time)}", end=f"{' '*10}\r")
+            sys.stdout.flush()
+            time.sleep(0.5)
+    print(f"{total_frames} / {total_frames} {progressBar(total_frames, total_frames, start_time)}{''*10}")
 
+    proc.wait()
     print()
     output_file = ffmpeg_params[-1]
     data = getMediaProperties(output_file)
@@ -107,6 +109,7 @@ def main():
     print(f"- Frame rate: {frame_rate} fps")
     print(f"- Bitrate: {bitrate}")
     print(f"- Size: {out_size}")
+
 
 if __name__ == '__main__':
     main()
