@@ -88,9 +88,9 @@ def main():
         data = parseFfmpegStatus(proc.stderr)
         if data is not None:
             print(
-                f"{data['frame']} / {total_frames} {data['fps']} {progressBar(int(data['frame']), total_frames, start_time)}",
+                f"{data['frame']} / {total_frames} {data['fps']}fps {progressBar(int(data['frame']), total_frames, start_time)}",
                 end='\r')
-        time.sleep(0.1)
+        time.sleep(0.5)
     print(
         f"{total_frames} / {total_frames} {data['fps']}fps {progressBar(total_frames, total_frames, start_time)}"
     )
