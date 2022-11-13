@@ -179,7 +179,7 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		fmt.Println("\n\n==> Output file:", ffmpeg_params[len(ffmpeg_params)-1])
+		fmt.Println("\n==> Output file:", ffmpeg_params[len(ffmpeg_params)-1])
 		fmt.Println("- Resolution:", media.widht, "x", media.height)
 		fmt.Printf("- Framerate: %.2ffps\n", media.framerate)
 		fmt.Println("- Duration:", humanReadableTime(media.duration))
