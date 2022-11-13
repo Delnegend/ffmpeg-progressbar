@@ -3,7 +3,6 @@ import time
 import sys
 import json
 import os
-# import re
 
 
 def humanReadableTime(seconds):
@@ -23,11 +22,13 @@ def humanReadableSize(size, decimal_places=2):
 
 def progressBar(value, endvalue, start_time, bar_length=20):
     percent = float(value) / endvalue if endvalue else 0
-    bar = '[' + '=' * int(round(percent * bar_length) - 1) + '>' + ' ' * (bar_length - int(round(percent * bar_length))) + ']'
+    bar_fill = '=' * int(round(percent * bar_length))
+    bar_empty = ' ' * (bar_length - len(bar_fill))
+    bar = f'{bar_fill}{bar_empty}'
     time_taken = time.time() - start_time
     eta = (time_taken / value) * (endvalue - value) if value else 0
     finish_at = time.localtime(time.time() + eta)
-    return f'{bar} {percent*100:.2f}% {humanReadableTime(time_taken)} / {humanReadableTime(eta)} ({time.strftime("%I:%M:%S %p", finish_at)})'
+    return f'{value} / {endvalue} [{bar}] {percent*100:.2f}% {humanReadableTime(time_taken)} / {humanReadableTime(eta)} ({time.strftime("%I:%M:%S %p", finish_at)})'
 
 
 def getMediaProperties(path):
@@ -36,7 +37,7 @@ def getMediaProperties(path):
         .split() + [path],
         stdout=sp.PIPE,
         stderr=sp.PIPE)
-    out, err = proc.communicate()
+    out, _ = proc.communicate()
     return json.loads(out)["streams"][0]
 
 
@@ -91,10 +92,10 @@ def main():
     while proc.poll() is None:
         data = parseFfmpegStatus(proc.stderr)
         if data is not None:
-            print(f"{data['frame']} / {total_frames} {data['fps']}fps {progressBar(int(data['frame']), total_frames, start_time)}", end=f"{' '*10}\r")
+            print(f"{data['fps']}fps {progressBar(int(data['frame']), total_frames, start_time)}", end=f"{' '*10}\r")
             sys.stdout.flush()
             time.sleep(0.5)
-    print(f"{total_frames} / {total_frames} {progressBar(total_frames, total_frames, start_time)}{''*10}")
+    print(f"0.00fps {progressBar(total_frames, total_frames, start_time)}{' '*10}")
 
     proc.wait()
     print()
@@ -107,6 +108,7 @@ def main():
     print(f"==> Output file: {output_file}")
     print(f"- Resolution: {resolution}")
     print(f"- Frame rate: {frame_rate} fps")
+    print(f"- Duration: {humanReadableTime(float(data['duration']))}")
     print(f"- Bitrate: {bitrate}")
     print(f"- Size: {out_size}")
 
